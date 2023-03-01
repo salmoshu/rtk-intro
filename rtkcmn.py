@@ -73,9 +73,9 @@ class uGNSS():
     BDS = 3
 
     # sat type
-    GEO  = 1
-    IGSO = 2
-    MEO  = 3
+    # GEO  = 1
+    # IGSO = 2
+    # MEO  = 3
 
     # SBS = ?
     # QZS = ?

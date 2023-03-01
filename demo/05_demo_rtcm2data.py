@@ -9,7 +9,8 @@ if __name__ == "__main__":
     curdir = os.path.abspath(os.path.join(os.getcwd(), "../data"))
     rtcmfile = curdir + "/05_rtcm.log"
 
-    rtcm = []
+    obs = None
+    nav = None
 
-    read_file(rtcmfile, rtcm)
-    print(rtcm[0])
+    read_file(rtcmfile, obs, nav)
+    # print(rtcm[0])
