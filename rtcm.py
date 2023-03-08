@@ -1,5 +1,51 @@
 from pyrtcm import RTCMReader
-from rtkcmn import uGNSS
+from rtkcmn import uGNSS, \
+                   trace
+
+class msm_h():
+    rtype = 0
+    staid = 0
+    tow = 0
+    sync = 0
+    iod = 0                     # issue of data station
+    clk_str = 0                 # clock steering indicator
+    clk_ext = 0                 # external clock indicator
+    smooth = 0                  # divergence free smoothing indicator
+    tint_s = 0                  # soothing interval
+    nsat = 0                    # number of satellites
+    sats = [0]*64;              # satellites
+    nsig = 0                    # number of signals
+    usigs = [0]*32;             # signals
+    cellmask = [0]*nsat*nsig;   # cell mask
+
+class rtcm():        #/* RTCM control struct type */
+    staid = 0 # int staid;          /* station id */
+    stah = 0 # int stah;           /* station health */
+    seqno = 0 # int seqno;          /* sequence number for rtcm 2 or iods msm */
+    outtype = 0 # int outtype;        /* output message type */
+    time = 0 # gtime_t time;       /* message time */
+    time_s = 0 # gtime_t time_s;     /* message start time */
+    obs = 0 # obs_t obs;          /* observation data (uncorrected) */
+    nav = 0 # nav_t nav;          /* satellite ephemerides */
+    sta = 0 # sta_t sta;          /* station parameters */
+    dgps = 0 # dgps_t *dgps;       /* output of dgps corrections */
+    ssr = 0 # ssr_t ssr[MAXSAT];  /* output of ssr corrections */
+    msg = 0 # char msg[128];      /* special message */
+    msgtype = 0 # char msgtype[256];  /* last message type */
+    msmtype = 0 # char msmtype[6][128]; /* msm signal types */
+    obsflag = 0 # int obsflag;        /* obs data complete flag (1:ok,0:not complete) */
+    ephsat = 0 # int ephsat;         /* update satellite of ephemeris */
+    cp = 0 # double cp[MAXSAT][NFREQ+NEXOBS]; /* carrier-phase measurement */
+    lock = 0 # unsigned short lock[MAXSAT][NFREQ+NEXOBS]; /* lock time */
+    loss = 0 # unsigned short loss[MAXSAT][NFREQ+NEXOBS]; /* loss of lock count */
+    lltime = 0 # gtime_t lltime[MAXSAT][NFREQ+NEXOBS]; /* last lock time */
+    nbyte = 0 # int nbyte;          /* number of bytes in message buffer */ 
+    nbit = 0 # int nbit;           /* number of bits in word buffer */ 
+    len = 0 # int len;            /* message length (bytes) */
+    buff = 0 # unsigned char buff[1200]; /* message buffer */
+    nmsg3 = 0 # unsigned int nmsg3[300]; /* message count of RTCM 3 (1-299:1001-1299,0:ohter) */
+    opt = 0 # char opt[256];      /* RTCM dependent options */
+
 
 def read_file(filename, obs, nav):
     stream = open(filename, 'rb')
@@ -119,21 +165,6 @@ def decode_rtcm(rtcm, obs, nav):
         pass
     # 1042: ret=decode_type1042(rtcm)  /* not supported */
     elif rtcm.DF002 == 1042:
-        pass
-    # 1057: ret=decode_ssr1(rtcm,SYS_GPS)  /* not supported */
-    elif rtcm.DF002 == 1057:
-        pass
-    # 1058: ret=decode_ssr2(rtcm,SYS_GPS)  /* not supported */
-    elif rtcm.DF002 == 1058:
-        pass
-    # 1059: ret=decode_ssr3(rtcm,SYS_GPS)  /* not supported */
-    elif rtcm.DF002 == 1059:
-        pass
-    # 1060: ret=decode_ssr4(rtcm,SYS_GPS)  /* not supported */
-    elif rtcm.DF002 == 1060:
-        pass
-    # 1061: ret=decode_ssr5(rtcm,SYS_GPS)  /* not supported */
-    elif rtcm.DF002 == 1061:
         pass
     # 1062: ret=decode_ssr6(rtcm,SYS_GPS)  /* not supported */
     elif rtcm.DF002 == 1062:
@@ -285,83 +316,13 @@ def decode_rtcm(rtcm, obs, nav):
     # 1230: ret=decode_type1230(rtcm)  /* not supported */
     elif rtcm.DF002 == 1230:
         pass
-    # 1240: ret=decode_ssr1(rtcm,SYS_GAL)  /* not supported */
-    elif rtcm.DF002 == 1240:
-        pass
-    # 1241: ret=decode_ssr2(rtcm,SYS_GAL)  /* not supported */
-    elif rtcm.DF002 == 1241:
-        pass
-    # 1242: ret=decode_ssr3(rtcm,SYS_GAL)  /* not supported */
-    elif rtcm.DF002 == 1242:
-        pass
-    # 1243: ret=decode_ssr4(rtcm,SYS_GAL)  /* not supported */
-    elif rtcm.DF002 == 1243:
-        pass
-    # 1244: ret=decode_ssr5(rtcm,SYS_GAL)  /* not supported */
-    elif rtcm.DF002 == 1244:
-        pass
-    # 1245: ret=decode_ssr6(rtcm,SYS_GAL)  /* not supported */
-    elif rtcm.DF002 == 1245:
-        pass
-    # 1246: ret=decode_ssr1(rtcm,SYS_QZS)  /* not supported */
-    elif rtcm.DF002 == 1246:
-        pass
-    # 1247: ret=decode_ssr2(rtcm,SYS_QZS)  /* not supported */
-    elif rtcm.DF002 == 1247:
-        pass
-    # 1248: ret=decode_ssr3(rtcm,SYS_QZS)  /* not supported */
-    elif rtcm.DF002 == 1248:
-        pass
-    # 1249: ret=decode_ssr4(rtcm,SYS_QZS)  /* not supported */
-    elif rtcm.DF002 == 1249:
-        pass
-    # 1250: ret=decode_ssr5(rtcm,SYS_QZS)  /* not supported */
-    elif rtcm.DF002 == 1250:
-        pass
-    # 1251: ret=decode_ssr6(rtcm,SYS_QZS)  /* not supported */
-    elif rtcm.DF002 == 1251:
-        pass
-    # 1252: ret=decode_ssr1(rtcm,SYS_SBS)  /* not supported */
-    elif rtcm.DF002 == 1252:
-        pass
-    # 1253: ret=decode_ssr2(rtcm,SYS_SBS)  /* not supported */
-    elif rtcm.DF002 == 1253:
-        pass
-    # 1254: ret=decode_ssr3(rtcm,SYS_SBS)  /* not supported */
-    elif rtcm.DF002 == 1254:
-        pass
-    # 1255: ret=decode_ssr4(rtcm,SYS_SBS)  /* not supported */
-    elif rtcm.DF002 == 1255:
-        pass
-    # 1256: ret=decode_ssr5(rtcm,SYS_SBS)  /* not supported */
-    elif rtcm.DF002 == 1256:
-        pass
-    # 1257: ret=decode_ssr6(rtcm,SYS_SBS)  /* not supported */
-    elif rtcm.DF002 == 1257:
-        pass
-    # 1258: ret=decode_ssr1(rtcm,SYS_CMP)  /* not supported */
-    elif rtcm.DF002 == 1258:
-        pass
-    # 1259: ret=decode_ssr2(rtcm,SYS_CMP)  /* not supported */
-    elif rtcm.DF002 == 1259:
-        pass
-    # 1260: ret=decode_ssr3(rtcm,SYS_CMP)  /* not supported */
-    elif rtcm.DF002 == 1260:
-        pass
-    # 1261: ret=decode_ssr4(rtcm,SYS_CMP)  /* not supported */
-    elif rtcm.DF002 == 1261:
-        pass
-    # 1262: ret=decode_ssr5(rtcm,SYS_CMP)  /* not supported */
-    elif rtcm.DF002 == 1262:
-        pass
-    # 1263: ret=decode_ssr6(rtcm,SYS_CMP)  /* not supported */
-    elif rtcm.DF002 == 1263:
-        pass
     else:
         pass
 
-def decode_msm7(rtcm, sys):
-    print(rtcm)
+def decode_msm_header(rtcm, sys, header):
+    header.rtype = rtcm.DF002      # RTCM类型
+    header.staid = rtcm.DF003      # 基准站ID
+    # 注意这里的历元时间暂未考虑周数，不确定其影响
     if sys == uGNSS.GLO:
         pass
     elif sys == uGNSS.BDS:
@@ -372,18 +333,24 @@ def decode_msm7(rtcm, sys):
         tow = rtcm.GNSSEpoch
     else:
         pass
+    header.tow = tow
+    header.sync = rtcm.DF393       # MSM多信息标志
+    header.iods = rtcm.DF409       # 数据期号
+    header.clk_str = rtcm.DF411    # 锁定引导标志
+    header.clk_ext = rtcm.DF412    # 扩展锁定标志
+    header.smooth = rtcm.DF417     # GNSS平滑类型标志
+    header.tint_s = rtcm.DF418     # GNSS平滑区间
+    header.nsat = rtcm.NSat        # GNSS卫星数目
+    header.sats_mask = rtcm.DF394  # GNSS卫星掩码
+    header.nsig = rtcm.NSig        # GNSS信号数目
+    header.sigs_mask = rtcm.DF395  # GNSS信号掩码
+    header.cell_mask = rtcm.DF396  # Cell标志组
 
-    staid = rtcm.DF003      # 基准站ID
-    sync = rtcm.DF393       # MSM多信息标志
-    iods = rtcm.DF409       # 数据期号
-    _ = rtcm.DF001_7        # 预留
-    clk_str = rtcm.DF411    # 锁定引导标志
-    clk_ext = rtcm.DF412    # 扩展锁定标志
-    smooth = rtcm.DF417     # GNSS平滑类型标志
-    tint_s = rtcm.DF418     # GNSS平滑区间
-    
-    nsat = rtcm.NSat        # 
-    sats_mask = rtcm.DF394  # GNSS卫星掩码
-    nsig = rtcm.NSig        # 
-    sigs_mask = rtcm.DF395  # GNSS信号掩码
-    cell_mask = rtcm.DF396  
+def decode_msm7(rtcm, sys):
+    header = msm_h()
+    decode_msm_header(rtcm, sys, header)
+    trace(2, 'rtcm3 %d length error: nsat=%d ncell=%d len=%d\n' % (header.rtype, 
+                header.nsat, 0, 0))
+    print(header.rtype)
+
+    return 0

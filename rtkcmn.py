@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from numpy import sin, cos, arctan2, arcsin, floor
 from numpy.linalg import norm
@@ -395,3 +396,27 @@ def ecef2enu(pos, r):
     E = xyz2enu(pos)
     e = E @ r
     return e
+
+trace_level = 5
+
+def trace(level, msg):
+    if level <= trace_level:
+        sys.stderr.write('%d %s' % (level, msg))
+        
+def tracemat(level, msg, mat, fmt='.6f'):
+    if level > trace_level:
+        return
+    fmt = '{:' + fmt + '}'
+    if len(mat.shape) == 1 or mat.shape[1] == 1:
+        trace(level, msg)
+        sys.stderr.write(' '.join(map(fmt.format, mat)))
+        sys.stderr.write('\n')
+    else:
+        trace(level, msg + '\n')
+        for row in mat:
+            sys.stderr.write(' '.join(map(fmt.format, row)))
+            sys.stderr.write('\n')
+    
+def tracelevel(level):
+    global trace_level
+    trace_level = level
