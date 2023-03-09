@@ -1,8 +1,10 @@
 from pyrtcm import RTCMReader
-from rtkcmn import uGNSS, \
+from rtkcmn import uGNSS, rCST, \
                    trace
 
-class msm_h():
+RANGE_MS = rCST.CLIGHT*0.001
+
+class MSM_h():
     rtype = 0
     staid = 0
     tow = 0
@@ -18,7 +20,7 @@ class msm_h():
     usigs = [0]*32;             # signals
     cellmask = [0]*nsat*nsig;   # cell mask
 
-class rtcm():        #/* RTCM control struct type */
+class RTCM():        #/* RTCM control struct type */
     staid = 0 # int staid;          /* station id */
     stah = 0 # int stah;           /* station health */
     seqno = 0 # int seqno;          /* sequence number for rtcm 2 or iods msm */
@@ -347,10 +349,40 @@ def decode_msm_header(rtcm, sys, header):
     header.cell_mask = rtcm.DF396  # Cell标志组
 
 def decode_msm7(rtcm, sys):
-    header = msm_h()
+    header = MSM_h()
+    r = [0.0]*64
+    rr = [0.0]*64
+    pr = [0.0]*64
+    cp = [0.0]*64
+    rrf = [0.0]*64
+    cnr = [0.0]*64
+    ex = [0] * 64
+    half = [0] * 64
+
+    # decode msm header
     decode_msm_header(rtcm, sys, header)
-    trace(2, 'rtcm3 %d length error: nsat=%d ncell=%d len=%d\n' % (header.rtype, 
-                header.nsat, 0, 0))
-    print(header.rtype)
+    
+    ''' decode satellite data '''
+    # range
+    for i in range(0, header.nsat):
+        rng = getattr(rtcm, f"DF406_{i+1:02}")
+        if rng != 255:
+            r[i] = rng * RANGE_MS
+
+    # extended info
+    for i in range(0, header.nsat):
+        ex[i] = rtcm.GNSSSpecific_01
+
+    print(r)
+
+    # for (j=0;j<h.nsat;j++) {
+    #     rng_m=getbitu(rtcm->buff,i,10); i+=10;
+    #     if (r[j]!=0.0) r[j]+=rng_m*P2_10*RANGE_MS;
+    # }
+    # for (j=0;j<h.nsat;j++) { /* phaserangerate */
+    #     rate =getbits(rtcm->buff,i,14); i+=14;
+    #     if (rate!=-8192) rr[j]=rate*1.0;
+    # }
+
 
     return 0
