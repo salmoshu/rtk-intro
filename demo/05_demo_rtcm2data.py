@@ -19,4 +19,3 @@ if __name__ == "__main__":
     nav = None
 
     read_file(rtcmfile, obs, nav)
-    # print(rtcm[0])

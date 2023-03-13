@@ -4,21 +4,54 @@ from rtkcmn import uGNSS, rCST, \
 
 RANGE_MS = rCST.CLIGHT*0.001
 
-class MSM_h():
-    rtype = 0
-    staid = 0
-    tow = 0
-    sync = 0
-    iod = 0                     # issue of data station
-    clk_str = 0                 # clock steering indicator
-    clk_ext = 0                 # external clock indicator
-    smooth = 0                  # divergence free smoothing indicator
-    tint_s = 0                  # soothing interval
-    nsat = 0                    # number of satellites
-    sats = [0]*64;              # satellites
-    nsig = 0                    # number of signals
-    usigs = [0]*32;             # signals
-    cellmask = [0]*nsat*nsig;   # cell mask
+P2_10 = 0.0009765625           # /* 2^-10 */
+P2_34 = 5.820766091346740E-11  # /* 2^-34 */
+P2_46 = 1.421085471520200E-14  # /* 2^-46 */
+P2_59 = 1.734723475976810E-18  # /* 2^-59 */
+P2_66 = 1.355252715606880E-20  # /* 2^-66 */
+
+P2_5 = 0.03125                # /* 2^-5 */
+P2_6 = 0.015625               # /* 2^-6 */
+P2_11 = 4.882812500000000E-04 # /* 2^-11 */
+P2_15 = 3.051757812500000E-05 # /* 2^-15 */
+P2_17 = 7.629394531250000E-06 # /* 2^-17 */
+P2_19 = 1.907348632812500E-06 # /* 2^-19 */
+P2_20 = 9.536743164062500E-07 # /* 2^-20 */
+P2_21 = 4.768371582031250E-07 # /* 2^-21 */
+P2_23 = 1.192092895507810E-07 # /* 2^-23 */
+P2_24 = 5.960464477539063E-08 # /* 2^-24 */
+P2_27 = 7.450580596923828E-09 # /* 2^-27 */
+P2_29 = 1.862645149230957E-09 # /* 2^-29 */
+P2_30 = 9.313225746154785E-10 # /* 2^-30 */
+P2_31 = 4.656612873077393E-10 # /* 2^-31 */
+P2_32 = 2.328306436538696E-10 # /* 2^-32 */
+P2_33 = 1.164153218269348E-10 # /* 2^-33 */
+P2_35 = 2.910383045673370E-11 # /* 2^-35 */
+P2_38 = 3.637978807091710E-12 # /* 2^-38 */
+P2_39 = 1.818989403545856E-12 # /* 2^-39 */
+P2_40 = 9.094947017729280E-13 # /* 2^-40 */
+P2_43 = 1.136868377216160E-13 # /* 2^-43 */
+P2_48 = 3.552713678800501E-15 # /* 2^-48 */
+P2_50 = 8.881784197001252E-16 # /* 2^-50 */
+P2_55 = 2.775557561562891E-17 # /* 2^-55 */
+
+class MSM_h:
+    def __init__(self) -> None:
+        self.rtype = 0
+        self.staid = 0
+        self.tow = 0
+        self.sync = 0
+        self.iod = 0                     # issue of data station
+        self.clk_str = 0                 # clock steering indicator
+        self.clk_ext = 0                 # external clock indicator
+        self.smooth = 0                  # divergence free smoothing indicator
+        self.tint_s = 0                  # soothing interval
+        self.nsat = 0                    # number of satellites
+        self.sats = [0]*64;              # satellites
+        self.nsig = 0                    # number of signals
+        self.usigs = [0]*32;             # signals
+        self.cellmask = [];              # cell mask
+        self.ncell = 0
 
 class RTCM():        #/* RTCM control struct type */
     staid = 0 # int staid;          /* station id */
@@ -346,7 +379,16 @@ def decode_msm_header(rtcm, sys, header):
     header.sats_mask = rtcm.DF394  # GNSS卫星掩码
     header.nsig = rtcm.NSig        # GNSS信号数目
     header.sigs_mask = rtcm.DF395  # GNSS信号掩码
-    header.cell_mask = rtcm.DF396  # Cell标志组
+    
+
+    cellmask_dec = rtcm.DF396  # Cell标志组
+    cellmask_str = str(bin(cellmask_dec))[2:]
+    print(cellmask_str)
+    for v in cellmask_str:
+        header.cellmask.append(int(v))
+
+    header.ncell = header.nsat * header.nsig
+    print(header.ncell)
 
 def decode_msm7(rtcm, sys):
     header = MSM_h()
@@ -358,31 +400,62 @@ def decode_msm7(rtcm, sys):
     cnr = [0.0]*64
     ex = [0] * 64
     half = [0] * 64
+    lock = [0] * 64
 
-    # decode msm header
+    ''' decode msm header '''
     decode_msm_header(rtcm, sys, header)
     
     ''' decode satellite data '''
     # range
+    # The number of integer milliseconds in GNSS Satellite rough ranges
     for i in range(0, header.nsat):
         rng = getattr(rtcm, f"DF406_{i+1:02}")
         if rng != 255:
             r[i] = rng * RANGE_MS
 
-    # extended info
-    for i in range(0, header.nsat):
-        ex[i] = rtcm.GNSSSpecific_01
+        # extended info
+        # Extended Satellite Information
+        ex[i] = getattr(rtcm, f"GNSSSpecific_{i+1:02}")
 
-    print(r)
+        # GNSS 卫星粗略距离
+        rng_m = getattr(rtcm, f"DF398_{i+1:02}")
+        if r[i] != 0:
+            r[i] += rng_m * P2_10 * RANGE_MS
 
-    # for (j=0;j<h.nsat;j++) {
-    #     rng_m=getbitu(rtcm->buff,i,10); i+=10;
-    #     if (r[j]!=0.0) r[j]+=rng_m*P2_10*RANGE_MS;
-    # }
-    # for (j=0;j<h.nsat;j++) { /* phaserangerate */
-    #     rate =getbits(rtcm->buff,i,14); i+=14;
-    #     if (rate!=-8192) rr[j]=rate*1.0;
-    # }
+        # phaserangerate
+        # GNSS Satellite rough PhaseRangeRates
+        rate = getattr(rtcm, f"DF399_{i+1:02}")
+        if rate != -8192:
+            rr[i] = rate*1.0
+    
+    ''' decode signal data '''
+    for i, cell in zip(range(header.ncell), header.cellmask):
+        if cell == 1:
+            # pseudorange
+            prv = getattr(rtcm, f"DF405_{i+1:02}")
+            if prv != -524288:
+                pr[i] = prv*P2_29*RANGE_MS
 
+            # phaserange
+            cpv = getattr(rtcm, f"DF406_{i+1:02}")
+            if cpv!=-8388608:
+                cp[i] = cpv*P2_31*RANGE_MS
+            
+            # lock time
+            lock[0] = getattr(rtcm, f"DF407_{i+1:02}")
+
+            # half-cycle amiguity
+            half[i] = getattr(rtcm, f"DF420_{i+1:02}")
+
+            # cnr
+            cnr[i] = getattr(rtcm, f"DF408_{i+1:02}") * 0.0625
+
+            # phaserangerate
+            rrv = getattr(rtcm, f"DF404_{i+1:02}")
+            if rrv != -16384:
+                rrf[i] = rrv * 0.0001
+
+    print(header.cellmask)
+    print(pr)
 
     return 0
